@@ -1,0 +1,76 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Avalonia.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="Avalonia.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="Untitled - Rizor">
+    <Window.Styles>
+        <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Background" Value="#1b1b1b" />
+        </Style>
+        <Style Selector="TextBox:pointerover /template/ Border#PART_BorderElement">
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Background" Value="#1b1b1b" />
+        </Style>
+        <Style Selector="TextBox:focus">
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Background" Value="#1b1b1b" />
+        </Style>
+    </Window.Styles>
+    <Design.DataContext>
+        <!-- This only sets the DataContext for the previewer in an IDE,
+        to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
+        <vm:MainWindowViewModel />
+    </Design.DataContext>
+    <DockPanel Background="#312f2f" LastChildFill="True">
+        <Menu DockPanel.Dock="Top" Background="#312f2f" Foreground="White" FontSize="14" Focusable="False">
+            <!-- Menu Styling -->
+            <Menu.Styles>
+                <Style Selector="MenuItem">
+                    <Setter Property="Focusable" Value="False" />
+                    <Setter Property="Cursor" Value="Hand" />
+                </Style>
+            </Menu.Styles>
+
+            <!-- File Menu -->
+            <MenuItem Background="#312f2f" Foreground="White" Header="File" HotKey="Alt+F" Focusable="False">
+                <MenuItem Header="New" HotKey="Ctrl+N" InputGesture="Ctrl+N" Click="OnNew" />
+                <MenuItem Header="New Window" />
+                <Separator />
+                <MenuItem Header="Open" HotKey="Ctrl+O" InputGesture="Ctrl+O" Click="OnOpen" />
+                <MenuItem Header="Save" HotKey="Ctrl+S" InputGesture="Ctrl+S" Click="OnSave" />
+            </MenuItem>
+
+            <!-- Edit Menu -->
+            <MenuItem Foreground="White" Header="Edit" HotKey="Alt+E" Focusable="False">
+                <MenuItem Header="Undo" HotKey="Ctrl+Z" InputGesture="Ctrl+Z" Click="OnUndo" />
+                <MenuItem Header="Redo" HotKey="Ctrl+Y" InputGesture="Ctrl+Y" Click="OnRedo" />
+                <Separator />
+                <MenuItem Header="Cut" HotKey="Ctrl+X" InputGesture="Ctrl+X" Click="OnCut" />
+                <MenuItem Header="Copy" HotKey="Ctrl+C" InputGesture="Ctrl+C" Click="OnCopy" />
+                <MenuItem Header="Paste" HotKey="Ctrl+V" InputGesture="Ctrl+V" Click="OnPaste" />
+            </MenuItem>
+        </Menu>
+
+        <!-- TextBox -->
+        <TextBox
+Name="Editor"
+BorderThickness="0"
+FocusAdorner="{x:Null}"
+VerticalContentAlignment="Top"
+FontSize="18"
+BorderBrush="Transparent"
+CornerRadius="0"
+AcceptsReturn="True"
+AcceptsTab="True"
+Background="#1b1b1b"
+Foreground="White" />
+    </DockPanel>
+</Window>
