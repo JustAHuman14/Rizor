@@ -171,5 +171,4 @@ public partial class MainWindow : Window
     private void OnDelete(object? sender, RoutedEventArgs e) => Editor.SelectedText = "";
     private void OnSelectAll(object? sender, RoutedEventArgs e) => Editor.SelectAll();
     private void OnExit(object? sender, RoutedEventArgs e) => this.Close();
-
 }
