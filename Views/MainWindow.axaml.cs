@@ -33,11 +33,42 @@ public partial class MainWindow : Window
         }
     }
 
+    private async void UpdateFile()
+    {
+        try
+        {
+            if (_fileSaved == null) return;
+
+            await using Stream stream = await _fileSaved.OpenWriteAsync();
+            await using StreamWriter streamWriter = new(stream);
+            await streamWriter.WriteAsync(Editor.Text);
+        }
+        catch (Exception)
+        {
+            Console.WriteLine("err");
+        }
+    }
+
     private void RefreshTitle()
     {
         string prefix = _hasFileChanged ? "*" : "";
-        string? fileName = _isFileOpened ? _fileSaved?.Name : "Untitled";
+        string fileName = _fileSaved != null ? _fileSaved.Name : "Untitled";
         this.Title = $"{prefix}{fileName} - Rizor";
+    }
+
+    private void OnNew(object? sender, RoutedEventArgs e)
+    {
+        _changedWithCode = true;
+
+        Editor.Clear();
+
+        _isFileOpened = false;
+        _hasFileChanged = false;
+        _fileSaved = null;
+
+        RefreshTitle();
+
+        _changedWithCode = false;
     }
 
     private async void OnOpen(object? sender, RoutedEventArgs e)
@@ -52,7 +83,7 @@ public partial class MainWindow : Window
             });
 
             if (fileOpened.Count == 0) return;
-            
+
             _fileSaved = fileOpened[0];
             await using Stream stream = await fileOpened[0].OpenReadAsync();
             using StreamReader streamReader = new StreamReader(stream);
@@ -83,14 +114,15 @@ public partial class MainWindow : Window
             {
                 _fileSaved = await _topLevel?.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions()
                 {
+                    Title = "Save File",
                     SuggestedFileName = "untitled",
                     SuggestedFileType = FilePickerFileTypes.TextPlain
                 })!;
-
-                UpdateFile();
             }
-            else
-                UpdateFile();
+
+            if (_fileSaved == null) return;
+
+            UpdateFile();
 
             _isFileOpened = true;
             _hasFileChanged = false;
@@ -102,40 +134,39 @@ public partial class MainWindow : Window
         }
     }
 
-    private async void UpdateFile()
+    private async void OnSaveAs(object? sender, RoutedEventArgs e)
     {
         try
         {
-            if (_fileSaved == null) return;
+            if (_topLevel == null) return;
 
-            await using Stream stream = await _fileSaved.OpenWriteAsync();
-            await using StreamWriter streamWriter = new(stream);
-            await streamWriter.WriteAsync(Editor.Text);
+            var fileSavedAs = await _topLevel?.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions()
+            {
+                Title = "Save File As",
+                SuggestedFileName = _fileSaved != null ? _fileSaved.Name : "untitled",
+                SuggestedFileType = FilePickerFileTypes.TextPlain
+            })!;
+
+            if (fileSavedAs == null) return;
+
+            _fileSaved = fileSavedAs;
+
+            UpdateFile();
+
+            _isFileOpened = true;
+            _hasFileChanged = false;
+            RefreshTitle();
         }
         catch (Exception)
         {
             Console.WriteLine("err");
         }
-    }    
+    }
 
-    private void OnPaste(object? sender, RoutedEventArgs e) => Editor.Paste();
-    private void OnCopy(object? sender, RoutedEventArgs e) => Editor.Copy();
     private void OnUndo(object? sender, RoutedEventArgs e) => Editor.Undo();
     private void OnRedo(object? sender, RoutedEventArgs e) => Editor.Redo();
     private void OnCut(object? sender, RoutedEventArgs e) => Editor.Cut();
-
-    private void OnNew(object? sender, RoutedEventArgs e)
-    {
-        _changedWithCode = true;
-
-        Editor.Clear();
-
-        _isFileOpened = false;
-        _hasFileChanged = false;
-        _fileSaved = null;
-
-        RefreshTitle();
-
-        _changedWithCode = false;
-    }
+    private void OnCopy(object? sender, RoutedEventArgs e) => Editor.Copy();
+    private void OnPaste(object? sender, RoutedEventArgs e) => Editor.Paste();
+    private void OnExit(object? sender, RoutedEventArgs e) => this.Close();
 }

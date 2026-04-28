@@ -19,10 +19,6 @@
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Background" Value="#1b1b1b" />
         </Style>
-        <Style Selector="TextBox:focus">
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="Background" Value="#1b1b1b" />
-        </Style>
     </Window.Styles>
     <Design.DataContext>
         <!-- This only sets the DataContext for the previewer in an IDE,
@@ -35,7 +31,6 @@
             <Menu.Styles>
                 <Style Selector="MenuItem">
                     <Setter Property="Focusable" Value="False" />
-                    <Setter Property="Cursor" Value="Hand" />
                 </Style>
             </Menu.Styles>
 
@@ -46,6 +41,9 @@
                 <Separator />
                 <MenuItem Header="Open" HotKey="Ctrl+O" InputGesture="Ctrl+O" Click="OnOpen" />
                 <MenuItem Header="Save" HotKey="Ctrl+S" InputGesture="Ctrl+S" Click="OnSave" />
+                <MenuItem Header="Save As" HotKey="Ctrl+Shift+S" InputGesture="Ctrl+Shift+S" Click="OnSaveAs" />
+                <Separator />
+                <MenuItem Header="Exit" HotKey="Ctrl+Q" InputGesture="Ctrl+Q" Click="OnExit"/>
             </MenuItem>
 
             <!-- Edit Menu -->
@@ -60,17 +58,8 @@
         </Menu>
 
         <!-- TextBox -->
-        <TextBox
-Name="Editor"
-BorderThickness="0"
-FocusAdorner="{x:Null}"
-VerticalContentAlignment="Top"
-FontSize="18"
-BorderBrush="Transparent"
-CornerRadius="0"
-AcceptsReturn="True"
-AcceptsTab="True"
-Background="#1b1b1b"
+        <TextBox Name="Editor" BorderThickness="0" FocusAdorner="{x:Null}" VerticalContentAlignment="Top" FontSize="18"
+BorderBrush="Transparent" CornerRadius="0" AcceptsReturn="True" AcceptsTab="True" Background="#1b1b1b"
 Foreground="White" />
     </DockPanel>
 </Window>
