@@ -43,7 +43,7 @@
                 <MenuItem Header="Save" HotKey="Ctrl+S" InputGesture="Ctrl+S" Click="OnSave" />
                 <MenuItem Header="Save As" HotKey="Ctrl+Shift+S" InputGesture="Ctrl+Shift+S" Click="OnSaveAs" />
                 <Separator />
-                <MenuItem Header="Exit" HotKey="Ctrl+Q" InputGesture="Ctrl+Q" Click="OnExit"/>
+                <MenuItem Header="Exit" HotKey="Ctrl+Q" InputGesture="Ctrl+Q" Click="OnExit" />
             </MenuItem>
 
             <!-- Edit Menu -->
@@ -54,12 +54,15 @@
                 <MenuItem Header="Cut" HotKey="Ctrl+X" InputGesture="Ctrl+X" Click="OnCut" />
                 <MenuItem Header="Copy" HotKey="Ctrl+C" InputGesture="Ctrl+C" Click="OnCopy" />
                 <MenuItem Header="Paste" HotKey="Ctrl+V" InputGesture="Ctrl+V" Click="OnPaste" />
+                <MenuItem Header="Delete" Click="OnDelete" />
+                <Separator />
+                <MenuItem Header="Select All" HotKey="Ctrl+A" InputGesture="Ctrl+A" Click="OnSelectAll"/>
             </MenuItem>
         </Menu>
 
         <!-- TextBox -->
         <TextBox Name="Editor" BorderThickness="0" FocusAdorner="{x:Null}" VerticalContentAlignment="Top" FontSize="18"
-BorderBrush="Transparent" CornerRadius="0" AcceptsReturn="True" AcceptsTab="True" Background="#1b1b1b"
-Foreground="White" />
+                 BorderBrush="Transparent" CornerRadius="0" AcceptsReturn="True" AcceptsTab="True" Background="#1b1b1b"
+                 Foreground="White" />
     </DockPanel>
 </Window>

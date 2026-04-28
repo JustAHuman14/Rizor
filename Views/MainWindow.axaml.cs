@@ -24,6 +24,7 @@ public partial class MainWindow : Window
 
     private void OnTextChanging(object? sender, TextChangingEventArgs e)
     {
+        
         if (_changedWithCode) return;
 
         if (!_hasFileChanged)
@@ -168,5 +169,8 @@ public partial class MainWindow : Window
     private void OnCut(object? sender, RoutedEventArgs e) => Editor.Cut();
     private void OnCopy(object? sender, RoutedEventArgs e) => Editor.Copy();
     private void OnPaste(object? sender, RoutedEventArgs e) => Editor.Paste();
+    private void OnDelete(object? sender, RoutedEventArgs e) => Editor.SelectedText = "";
+    private void OnSelectAll(object? sender, RoutedEventArgs e) => Editor.SelectAll();
     private void OnExit(object? sender, RoutedEventArgs e) => this.Close();
+
 }
