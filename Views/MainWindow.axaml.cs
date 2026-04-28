@@ -24,7 +24,6 @@ public partial class MainWindow : Window
 
     private void OnTextChanging(object? sender, TextChangingEventArgs e)
     {
-        
         if (_changedWithCode) return;
 
         if (!_hasFileChanged)
