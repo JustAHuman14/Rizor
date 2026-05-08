@@ -1,0 +1,7 @@
+﻿<Solution>
+  <Project Path="Rizor.Android/Rizor.Android.csproj">
+    <Deploy />
+  </Project>
+  <Project Path="Rizor.Desktop/Rizor.Desktop.csproj" />
+  <Project Path="Rizor.Core/Rizor.Core.csproj" />
+</Solution>
