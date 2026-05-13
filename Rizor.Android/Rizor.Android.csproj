@@ -6,10 +6,18 @@
     <Nullable>enable</Nullable>
     <ApplicationId>com.JustAHuman.Rizor</ApplicationId>
     <ApplicationTitle>Rizor</ApplicationTitle>
-    <ApplicationVersion>1</ApplicationVersion>
-    <ApplicationDisplayVersion>1.0.0</ApplicationDisplayVersion>
+    <ApplicationVersion>2</ApplicationVersion>
+    <ApplicationDisplayVersion>1.1.0</ApplicationDisplayVersion>
     <AndroidPackageFormat>apk</AndroidPackageFormat>
     <AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>
+    <PublishTrimmed>true</PublishTrimmed>
+    <AndroidKeyStore>true</AndroidKeyStore>
+    <AndroidSigningKeyStore>Rizor.keystore</AndroidSigningKeyStore>
+    <AndroidSigningKeyAlias>Rizor</AndroidSigningKeyAlias>
+    <AndroidSigningKeyPass>$(ANDROID_SIGNING_PASSWORD)</AndroidSigningKeyPass>
+    <AndroidSigningStorePass>$(ANDROID_SIGNING_PASSWORD)</AndroidSigningStorePass>
+    <AndroidSdkDirectory>$(ANDROID_SDK_DIRECTORY)</AndroidSdkDirectory>
+    <JavaSdkDirectory>$(JAVA_SDK_DIRECTORY)</JavaSdkDirectory>
   </PropertyGroup>
 
   <ItemGroup>
