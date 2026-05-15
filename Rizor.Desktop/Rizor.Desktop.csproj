@@ -6,6 +6,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <AssemblyName>Rizor</AssemblyName>
+    <Version>1.2.0</Version>
     <SelfContained>true</SelfContained>
     <PublishSingleFile>true</PublishSingleFile>
     <ApplicationIcon>../Rizor.Core/Assets/rizor-logo.ico</ApplicationIcon>

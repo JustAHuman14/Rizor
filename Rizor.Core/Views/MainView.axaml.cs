@@ -6,6 +6,7 @@ using Avalonia.Platform.Storage;
 using System.IO;
 using System.Threading.Tasks;
 using Avalonia;
+using Avalonia.Input.TextInput;
 using Avalonia.Threading;
 using AvaloniaEdit.Folding;
 using AvaloniaEdit.TextMate;
@@ -22,26 +23,28 @@ namespace Rizor.Core.Views;
 public partial class MainView : UserControl
 {
     private TopLevel? _topLevel;
-    private IStorageFile? _fileSaved;
-    private bool _hasFileChanged;
-    private bool _isFileOpened;
-    private bool _changedWithCode;
+    private IStorageFile? _fileOpened;
+    private Language? _language;
     private readonly RegistryOptions _registryOptions;
     private readonly TextMate.Installation _textMateInstallation;
     private readonly FoldingManager _foldingManager;
     private readonly BraceFoldingStrategy _braceFoldingStrategy;
     private readonly XmlFoldingStrategy _xmlFoldingStrategy;
-    private Language? _language;
+    private readonly IndentFoldingStrategy _indentFoldingStrategy;
     private readonly DispatcherTimer _dispatcherTimer;
+    private bool _saveAs;
+    private bool _hasFileChanged;
+    private bool _changedWithCode;
 
     public MainView()
     {
         InitializeComponent();
 
-        // Setting up text folding
+        // Setting up something
         _foldingManager = FoldingManager.Install(Editor.TextArea);
         _braceFoldingStrategy = new BraceFoldingStrategy();
         _xmlFoldingStrategy = new XmlFoldingStrategy();
+        _indentFoldingStrategy = new IndentFoldingStrategy();
 
         // Setting up syntax highlighting
         _registryOptions = new RegistryOptions(ThemeName.Dracula);
@@ -54,31 +57,30 @@ public partial class MainView : UserControl
         // Subscribing to events
         Editor.Document.UndoStack.PropertyChanged += OnUndoPropertyChanged;
         Editor.Document.TextChanged += Editor_TextChanged;
+        Editor.TextArea.PointerPressed += (_, _) =>
+        {
+            if (OperatingSystem.IsAndroid())
+            {
+                _topLevel?.FocusManager.Focus(null);
+                Editor.TextArea.Focus();
+            }
+        };
 
         // Setting up timer to update text folding
-        _dispatcherTimer = new DispatcherTimer(TimeSpan.FromSeconds(1), DispatcherPriority.Background, TimerTick);
+        _dispatcherTimer = new DispatcherTimer(
+            TimeSpan.FromSeconds(0.5),
+            DispatcherPriority.Background,
+            TimerTick);
         _dispatcherTimer.Start();
-    }
 
-    private void Editor_TextChanged(object? sender, EventArgs e)
-    {
-        _dispatcherTimer.Stop();
-        _dispatcherTimer.Start();
-    }
-
-    private void TimerTick(object? sender, EventArgs e)
-    {
-        _dispatcherTimer.Stop();
-        if (!_hasFileChanged) return;
-
-        if (_language?.Id is "xml" or "html")
-            _xmlFoldingStrategy.UpdateFoldings(_foldingManager, Editor.Document);
-        else
-            _braceFoldingStrategy.UpdateFoldings(_foldingManager, Editor.Document);
+        // Setting Text Input Options for Android ig
+        TextInputOptions.SetContentType(Editor.TextArea, TextInputContentType.Normal);
+        TextInputOptions.SetMultiline(Editor.TextArea, true);
     }
 
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
+        // hlo
         base.OnAttachedToVisualTree(e);
         _topLevel = TopLevel.GetTopLevel(this);
 
@@ -89,6 +91,40 @@ public partial class MainView : UserControl
     {
         if (_topLevel is Window window) window.Closing -= OnExit;
         base.OnDetachedFromVisualTree(e);
+    }
+
+    private void Editor_TextChanged(object? sender, EventArgs e)
+    {
+        // tick-tock
+        _dispatcherTimer.Stop();
+        _dispatcherTimer.Start();
+    }
+
+    private void TimerTick(object? sender, EventArgs e)
+    {
+        // hi
+        _dispatcherTimer.Stop();
+        SetFoldingStrategies();
+    }
+
+    private void SetFoldingStrategies()
+    {
+        if (_language?.Id is "xml" or "html")
+            _xmlFoldingStrategy.UpdateFoldings(_foldingManager, Editor.Document);
+        else if (_language?.Id is "python" or "yaml")
+            _indentFoldingStrategy.UpdateFoldings(_foldingManager, Editor.Document);
+        else
+            _braceFoldingStrategy.UpdateFoldings(_foldingManager, Editor.Document);
+    }
+
+    private void SetGrammar()
+    {
+        if (_fileOpened == null) return;
+
+        _language = _registryOptions.GetLanguageByExtension(Path.GetExtension(_fileOpened.Path.LocalPath));
+        string scopeName = _registryOptions.GetScopeByLanguageId(_language.Id);
+
+        _textMateInstallation.SetGrammar(scopeName);
     }
 
     private void OnUndoPropertyChanged(object? sender, EventArgs e)
@@ -105,7 +141,7 @@ public partial class MainView : UserControl
     {
         if (_topLevel is not Window window) return;
         string prefix = _hasFileChanged ? "*" : "";
-        string fileName = _fileSaved != null ? _fileSaved.Name : "Untitled";
+        string fileName = _fileOpened != null ? _fileOpened.Name : "Untitled";
         window.Title = $"{prefix}{fileName} - Rizor";
     }
 
@@ -113,56 +149,109 @@ public partial class MainView : UserControl
     {
         try
         {
-            if (_fileSaved == null) return;
+            if (_fileOpened == null) return;
 
-            await using Stream stream = await _fileSaved.OpenWriteAsync();
+            await using Stream stream = await _fileOpened.OpenWriteAsync();
             await using StreamWriter streamWriter = new(stream);
             await streamWriter.WriteAsync(Editor.Text);
             Editor.Document.UndoStack.MarkAsOriginalFile();
         }
         catch (Exception)
         {
-            Console.WriteLine("err");
+            ShowError("An Error Occured While Saving The File!");
         }
     }
 
     private async Task SaveFile(string title, string suggestedFileName)
     {
-        if (!_isFileOpened)
+        // self explanatory ig
+        if (_fileOpened == null || _saveAs)
         {
-            _fileSaved = await _topLevel?.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions()
+            IStorageFile? savedFile = await _topLevel?.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions()
             {
                 Title = title,
                 SuggestedFileName = suggestedFileName,
                 SuggestedFileType = FilePickerFileTypes.TextPlain
             })!;
+            _saveAs = false;
+            if (savedFile == null) return;
+            _fileOpened = savedFile;
         }
 
-        if (_fileSaved == null) return;
-
+        SetGrammar();
         await UpdateFile();
 
-        _isFileOpened = true;
         _hasFileChanged = false;
 
         RefreshTitle();
     }
 
-    private void OnNew(object? sender, RoutedEventArgs e)
+    private async void OnNew(object? sender, RoutedEventArgs e)
     {
-        ClearStatusBar();
+        try
+        {
+            if (_hasFileChanged)
+                await SaveChanges();
 
-        _changedWithCode = true;
+            ClearStatusBar();
 
-        Editor.Clear();
+            _changedWithCode = true;
 
-        _isFileOpened = false;
-        _hasFileChanged = false;
-        _fileSaved = null;
+            Editor.Clear();
 
-        RefreshTitle();
+            _hasFileChanged = false;
+            _fileOpened = null;
 
-        _changedWithCode = false;
+            RefreshTitle();
+
+            _changedWithCode = false;
+        }
+        catch (Exception)
+        {
+            ShowError();
+        }
+    }
+
+    private async Task SaveChanges()
+    {
+        try
+        {
+            string fileName = _fileOpened != null ? _fileOpened.Name : "Untitled";
+            IMsBox<ButtonResult> box = MessageBoxManager.GetMessageBoxStandard(
+                new MessageBoxStandardParams()
+                {
+                    WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                    ButtonDefinitions = ButtonEnum.YesNoCancel,
+                    ContentTitle = "Unsaved Changes",
+                    ContentMessage = $"Save changes in {fileName}",
+                    CanResize = false
+                });
+
+            ButtonResult result = await box.ShowAsync();
+
+            if (result is ButtonResult.Cancel or ButtonResult.None) return;
+
+            if (result == ButtonResult.Yes)
+                await SaveFile("Save File", "untitled");
+        }
+        catch (Exception)
+        {
+            ShowError();
+        }
+    }
+
+    private void OnNewWindow(object? sender, RoutedEventArgs e)
+    {
+        // oi
+        if (_topLevel is Window)
+        {
+            MainWindow newMainWindow = new MainWindow
+            {
+                DataContext = new MainViewModel()
+            };
+
+            newMainWindow.Show();
+        }
     }
 
     private async void OnOpen(object? sender, RoutedEventArgs e)
@@ -181,23 +270,15 @@ public partial class MainView : UserControl
             if (fileOpened.Count == 0) return;
 
             Editor.Clear();
-            _fileSaved = fileOpened[0];
-            await using Stream stream = await _fileSaved.OpenReadAsync();
+            _fileOpened = fileOpened[0];
+            await using Stream stream = await _fileOpened.OpenReadAsync();
 
             Editor.Load(stream);
             Editor.Document.UndoStack.MarkAsOriginalFile();
 
-            _language = _registryOptions.GetLanguageByExtension(Path.GetExtension(_fileSaved.Path.LocalPath));
-            string scopeName = _registryOptions.GetScopeByLanguageId(_language.Id);
+            SetGrammar();
+            SetFoldingStrategies();
 
-            _textMateInstallation.SetGrammar(scopeName);
-
-            if (_language?.Id is "xml" or "html")
-                _xmlFoldingStrategy.UpdateFoldings(_foldingManager, Editor.Document);
-            else
-                _braceFoldingStrategy.UpdateFoldings(_foldingManager, Editor.Document);
-
-            _isFileOpened = true;
             _changedWithCode = false;
             _hasFileChanged = false;
 
@@ -208,10 +289,7 @@ public partial class MainView : UserControl
             switch (ex)
             {
                 case UnauthorizedAccessException:
-                    Console.WriteLine("Permission Denied!");
-                    break;
-                case ArgumentException:
-                    Console.WriteLine("File Encoding Not Supported!");
+                    ShowError("Permission Denied To Open This File!");
                     break;
             }
         }
@@ -229,32 +307,54 @@ public partial class MainView : UserControl
         }
         catch (Exception)
         {
-            Console.WriteLine("err");
+            ShowError();
         }
     }
 
     private async void OnSaveAs(object? sender, RoutedEventArgs e)
     {
+        // hey
         try
         {
             if (_topLevel == null) return;
 
             ClearStatusBar();
-
-            await SaveFile("Save File As", _fileSaved != null ? _fileSaved.Name : "untitled");
+            _saveAs = true;
+            await SaveFile("Save File As", _fileOpened != null ? _fileOpened.Name : "untitled");
         }
         catch (Exception)
         {
-            Console.WriteLine("err");
+            ShowError();
+        }
+    }
+
+    private async void OnExit(object? sender, WindowClosingEventArgs e)
+    {
+        try
+        {
+            // howdy
+            if (_topLevel is not Window window || !_hasFileChanged) return;
+            e.Cancel = true;
+        
+            await SaveChanges();
+
+            window.Closing -= OnExit;
+            window.Close();
+        }
+        catch (Exception)
+        {
+            ShowError();
         }
     }
 
     private void ClearStatusBar()
     {
+        // wassup
         if (StatusBar.Text != string.Empty)
             StatusBar.ClearValue(TextBlock.TextProperty);
     }
 
+// soup
     private void OnUndo(object? sender, RoutedEventArgs e) => Editor.Undo();
     private void OnRedo(object? sender, RoutedEventArgs e) => Editor.Redo();
     private void OnCut(object? sender, RoutedEventArgs e) => Editor.Cut();
@@ -262,75 +362,27 @@ public partial class MainView : UserControl
     private void OnPaste(object? sender, RoutedEventArgs e) => Editor.Paste();
     private void OnDelete(object? sender, RoutedEventArgs e) => Editor.SelectedText = "";
     private void OnSelectAll(object? sender, RoutedEventArgs e) => Editor.SelectAll();
-
-    private async void OnExit(object? sender, WindowClosingEventArgs e)
-    {
-        try
-        {
-            if (_topLevel is not Window window || !_hasFileChanged) return;
-            e.Cancel = true;
-            string fileName = _fileSaved != null ? _fileSaved.Name : "Untitled";
-            IMsBox<ButtonResult> box = MessageBoxManager.GetMessageBoxStandard(
-                new MessageBoxStandardParams()
-                {
-                    WindowStartupLocation = WindowStartupLocation.CenterOwner,
-                    ButtonDefinitions = ButtonEnum.YesNoCancel,
-                    ContentTitle = "Unsaved Changes",
-                    ContentMessage = $"Save changes in  {fileName}",
-                    CanResize = false,
-                });
-
-            ButtonResult result = await box.ShowWindowDialogAsync(window);
-
-            if (result == ButtonResult.Cancel) return;
-
-            if (result == ButtonResult.Yes)
-            {
-                if (_fileSaved == null)
-                    await SaveFile("Save File", "untitled");
-                else
-                    await UpdateFile();
-            }
-
-            window.Closing -= OnExit;
-            window.Close();
-        }
-        catch (Exception)
-        {
-            Console.WriteLine("err");
-        }
-    }
+    private void ShowError(string err = "An Error Occured!") => StatusBar.Text = err;
 
     private void EnableWordWrap(object? sender, RoutedEventArgs e)
     {
+        // yo
         if (WordWrapCheckBox.IsChecked == null) return;
 
         WordWrapCheckBox.IsChecked = !WordWrapCheckBox.IsChecked;
         Editor.WordWrap = (bool)WordWrapCheckBox.IsChecked;
     }
 
-    private void OnNewWindow(object? sender, RoutedEventArgs e)
-    {
-        if (_topLevel is Window)
-        {
-            MainWindow newMainWindow = new MainWindow
-            {
-                DataContext = new MainViewModel()
-            };
-
-            newMainWindow.Show();
-        }
-    }
-
     private async void OnChangeFont(object? sender, RoutedEventArgs e)
     {
+        // yoi
         try
         {
             await DialogHost.Show(null, MainDialogHost);
         }
         catch (Exception)
         {
-            Console.WriteLine("err");
+            ShowError();
         }
     }
 }
