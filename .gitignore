@@ -483,3 +483,4 @@ $RECYCLE.BIN/
 
 *.keystore
 *.jks
+.gitignore

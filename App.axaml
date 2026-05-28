@@ -1,0 +1,18 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Rizor.App"
+             xmlns:local="using:Rizor" 
+             xmlns:dialogHostAvalonia1="clr-namespace:DialogHostAvalonia;assembly=DialogHost.Avalonia"
+             RequestedThemeVariant="Dark">
+             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+
+    <Application.DataTemplates>
+        <local:ViewLocator/>
+    </Application.DataTemplates>
+  
+    <Application.Styles>
+        <FluentTheme />
+        <StyleInclude Source="avares://AvaloniaEdit/Themes/Fluent/AvaloniaEdit.xaml" />
+        <dialogHostAvalonia1:DialogHostStyles />
+    </Application.Styles>
+</Application>
