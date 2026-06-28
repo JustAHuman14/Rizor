@@ -1,19 +1,39 @@
 ﻿using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Rizor.Models;
 
 namespace Rizor.ViewModels;
 
 public partial class MainWindowViewModel : ViewModelBase
 {
-    public List<FontFamily> FontFamiliesList { get; }
-    public List<double> FontSizeList { get; }
+    // Observable Variables
     [ObservableProperty] public partial FontFamily SelectedFontFamily { get; set; }
     [ObservableProperty] public partial double SelectedFontSize { get; set; }
+    public ObservableCollection<Node> Nodes { get; }
+
+    // Non-Observable Variables
+    public List<FontFamily> FontFamiliesList { get; }
+    public List<double> FontSizeList { get; }
 
     public MainWindowViewModel()
     {
+        Nodes = new()
+        {
+            new Node("Folder", [
+                new Node("Sub Folder", [
+                    new Node("Sub-Sub Folder", [
+                        new Node("File 1"),
+                        new Node("File 2"),
+                        new Node("File 3"),
+                        new Node("File 4")
+                    ])
+                ])
+            ])
+        };
+
         FontFamiliesList = FontManager.Current.SystemFonts
             .OrderBy(n => n.Name)
             .ToList();
